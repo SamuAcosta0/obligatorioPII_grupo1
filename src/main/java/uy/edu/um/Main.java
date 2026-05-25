@@ -9,6 +9,5 @@ public class Main {
         ProcessConsole pc = new ProcessConsole(new ProcessManagerImpl());
         pc.init();
 
-        //lucas
     }
 }
