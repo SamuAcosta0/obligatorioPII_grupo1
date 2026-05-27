@@ -32,9 +32,9 @@ public class ProcessManagerImpl implements ProcessManager{
         this.usuarios = usuarios;
     }
 
-    //Funciones auxiliares de recorrida:
+    public ProcessManagerImpl() {
 
-
+    }
 
     @Override
     public void loadProcessAndUserData(String processCsvPath, String usersCsvPath) {
