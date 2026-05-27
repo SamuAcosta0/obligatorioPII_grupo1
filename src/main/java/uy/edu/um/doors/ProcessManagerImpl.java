@@ -1,5 +1,6 @@
 package uy.edu.um.doors;
 import uy.edu.um.entities.Process;
+import uy.edu.um.entities.User;
 import uy.edu.um.tad.heap.MyHeap;
 import uy.edu.um.tad.heap.MyHeapImpl;
 import uy.edu.um.tad.heap.EmptyHeapException;
@@ -13,14 +14,12 @@ import uy.edu.um.tad.hash.MyHash;
 import uy.edu.um.tad.hash.MyHashImpl;
 import uy.edu.um.entities.*;
 
-
 public class ProcessManagerImpl implements ProcessManager{
 
     private MyQueue<Process> procesosNuevos;
     private MyHeap<Process> procesosPendientes;
     private Process procesoEnEjecucion;
 
-    private static final int maxFinalizados = 10;
     private MyStack<Process> procesosFinalizados;
 
     private MyHash<Integer, User> usuarios;
