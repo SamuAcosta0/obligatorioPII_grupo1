@@ -1,4 +1,5 @@
 package uy.edu.um.doors;
+import uy.edu.um.entities.Process;
 import uy.edu.um.tad.heap.MyHeap;
 import uy.edu.um.tad.heap.MyHeapImpl;
 import uy.edu.um.tad.heap.EmptyHeapException;
@@ -10,6 +11,8 @@ import uy.edu.um.tad.queue.MyQueue;
 import uy.edu.um.tad.queue.MyQueueImpl;
 import uy.edu.um.tad.hash.MyHash;
 import uy.edu.um.tad.hash.MyHashImpl;
+import uy.edu.um.entities.*;
+
 
 public class ProcessManagerImpl implements ProcessManager{
 
@@ -28,6 +31,10 @@ public class ProcessManagerImpl implements ProcessManager{
         this.procesosPendientes = procesosPendientes;
         this.procesosFinalizados = procesosFinalizados;
         this.usuarios = usuarios;
+    }
+
+    public ProcessManagerImpl() {
+
     }
 
     @Override

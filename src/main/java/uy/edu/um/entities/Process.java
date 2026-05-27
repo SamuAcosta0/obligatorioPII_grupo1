@@ -10,15 +10,17 @@ public class Process implements Comparable<Process> {
     private String name;
     private User user;
     private int priority;
+
     @Setter
     private ProcessState state;
     @Setter
     private FinishType finishType;
     @Setter
     private User terminatedBy;
+
     private MyList<Event> events;
 
-    public Process(int pid, String name, User user) {
+    public Process(int pid, String name, User user, ProcessState aNew) {
         this.pid        = pid;
         this.name       = name;
         this.user       = user;
