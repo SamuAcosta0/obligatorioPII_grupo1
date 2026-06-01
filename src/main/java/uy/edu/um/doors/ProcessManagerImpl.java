@@ -14,31 +14,27 @@ import uy.edu.um.tad.hash.MyHash;
 import uy.edu.um.tad.hash.MyHashImpl;
 import uy.edu.um.entities.*;
 import uy.edu.um.importer.DataLoader;
+import uy.edu.um.entities.Log;
+
+import java.io.IOException;
+
 
 public class ProcessManagerImpl implements ProcessManager{
 
     private MyQueue<Process> procesosNuevos;
     private MyHeap<Process> procesosPendientes;
     private Process procesoEnEjecucion;
-
     private MyStack<Process> procesosFinalizados;
-
     private MyHash<Integer, User> usuarios;
+    private Log logger;
 
-    public ProcessManagerImpl(MyQueue<Process> procesosNuevos, Process procesoEnEjecucion, MyHeap<Process> procesosPendientes, MyStack<Process> procesosFinalizados, MyHash<Integer, User> usuarios) {
-        this.procesosNuevos = procesosNuevos;
-        this.procesoEnEjecucion = procesoEnEjecucion;
-        this.procesosPendientes = procesosPendientes;
-        this.procesosFinalizados = procesosFinalizados;
-        this.usuarios = usuarios;
-    }
-
-    public ProcessManagerImpl() {
-        this.usuarios            = new MyHashImpl<>();
-        this.procesosNuevos      = new MyQueueImpl<>();
-        this.procesosPendientes  = new MyHeapImpl<>();
+    public ProcessManagerImpl() throws IOException {
+        this.procesosNuevos = new MyQueueImpl<>();
+        this.procesosPendientes = new MyHeapImpl<>();
         this.procesosFinalizados = new MyStackImpl<>();
-        this.procesoEnEjecucion  = null;
+        this.usuarios = new MyHashImpl<>();
+        this.procesoEnEjecucion = null;
+        this.logger = new Log();
     }
 
     @Override
