@@ -39,7 +39,16 @@ public class ProcessManagerImpl implements ProcessManager{
 
     @Override
     public void loadProcessAndUserData(String processCsvPath, String usersCsvPath) {
-        System.out.println("IMPLEMENTAR");
+        usuarios            = new MyHashImpl<>();
+        procesosNuevos      = new MyQueueImpl<>();
+        procesosPendientes  = new MyHeapImpl<>();
+        procesosFinalizados = new MyStackImpl<>();
+
+        DataLoader.loadUsers(usersCsvPath, usuarios);
+        DataLoader.loadProcesses(processCsvPath, procesosNuevos, usuarios);
+
+        System.out.println("Carga completada: " + usuarios.size()
+                + " usuarios, " + procesosNuevos.size() + " procesos nuevos.");
     }
 
     @Override
