@@ -13,6 +13,7 @@ import uy.edu.um.tad.queue.MyQueueImpl;
 import uy.edu.um.tad.hash.MyHash;
 import uy.edu.um.tad.hash.MyHashImpl;
 import uy.edu.um.entities.*;
+import uy.edu.um.importer.DataLoader;
 
 public class ProcessManagerImpl implements ProcessManager{
 
@@ -33,12 +34,25 @@ public class ProcessManagerImpl implements ProcessManager{
     }
 
     public ProcessManagerImpl() {
-
+        this.usuarios            = new MyHashImpl<>();
+        this.procesosNuevos      = new MyQueueImpl<>();
+        this.procesosPendientes  = new MyHeapImpl<>();
+        this.procesosFinalizados = new MyStackImpl<>();
+        this.procesoEnEjecucion  = null;
     }
 
     @Override
     public void loadProcessAndUserData(String processCsvPath, String usersCsvPath) {
-        System.out.println("IMPLEMENTAR");
+        usuarios            = new MyHashImpl<>();
+        procesosNuevos      = new MyQueueImpl<>();
+        procesosPendientes  = new MyHeapImpl<>();
+        procesosFinalizados = new MyStackImpl<>();
+
+        DataLoader.loadUsers(usersCsvPath, usuarios);
+        DataLoader.loadProcesses(processCsvPath, procesosNuevos, usuarios);
+
+        System.out.println("Carga completada: " + usuarios.size()
+                + " usuarios, " + procesosNuevos.size() + " procesos nuevos.");
     }
 
     @Override
