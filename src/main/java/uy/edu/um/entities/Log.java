@@ -11,7 +11,7 @@ public class Log {
 
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     //formato que pide la consigna para el nombre del archivo
-    private static final DateTimeFormatter FORMATO_TIMESTAMP = DateTimeFormatter.ofPattern("yyy- MM- dd HH:mm:ss");
+    private static final DateTimeFormatter FORMATO_TIMESTAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     //formato que pide la consigna para el timestamp de cada mensaje del log
 
     //guardamos la ruta del archivo
