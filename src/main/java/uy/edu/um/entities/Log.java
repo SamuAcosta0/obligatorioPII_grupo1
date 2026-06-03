@@ -21,10 +21,10 @@ public class Log {
     public Log() throws IOException {
         String fechaHoy = LocalDate.now().format(FORMATO_FECHA);
 
-        this.nombreArchivo = "DOORS_PROCESS_LOG_FECHA" + fechaHoy + ".txt";
+        this.nombreArchivo = "DOORS_PROCESS_LOG_" + fechaHoy + ".txt";
         //nombre del archivo
 
-        this.rutaArchivo = "src/main/resources" + nombreArchivo;
+        this.rutaArchivo = "src/main/" + nombreArchivo;
         //esta es la ruta completa del archivo, el programa se ejecuta desde el directorio del trabajo
         //desde la raíz del proyecto
     }

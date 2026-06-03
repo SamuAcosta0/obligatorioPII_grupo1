@@ -6,6 +6,7 @@ import uy.edu.um.tad.heap.MyHeapImpl;
 import uy.edu.um.tad.heap.EmptyHeapException;
 import uy.edu.um.tad.list.MyList;
 import uy.edu.um.tad.list.MyLinkedListImpl;
+import uy.edu.um.tad.queue.EmptyQueueException;
 import uy.edu.um.tad.stack.MyStack;
 import uy.edu.um.tad.stack.MyStackImpl;
 import uy.edu.um.tad.queue.MyQueue;
@@ -30,7 +31,7 @@ public class ProcessManagerImpl implements ProcessManager{
 
     public ProcessManagerImpl() throws IOException {
         this.procesosNuevos = new MyQueueImpl<>();
-        this.procesosPendientes = new MyHeapImpl<>();
+        this.procesosPendientes = new MyHeapImpl<>(false);
         this.procesosFinalizados = new MyStackImpl<>();
         this.usuarios = new MyHashImpl<>();
         this.procesoEnEjecucion = null;
@@ -39,11 +40,6 @@ public class ProcessManagerImpl implements ProcessManager{
 
     @Override
     public void loadProcessAndUserData(String processCsvPath, String usersCsvPath) {
-        usuarios            = new MyHashImpl<>();
-        procesosNuevos      = new MyQueueImpl<>();
-        procesosPendientes  = new MyHeapImpl<>();
-        procesosFinalizados = new MyStackImpl<>();
-
         DataLoader.loadUsers(usersCsvPath, usuarios);
         DataLoader.loadProcesses(processCsvPath, procesosNuevos, usuarios);
 
@@ -52,8 +48,28 @@ public class ProcessManagerImpl implements ProcessManager{
     }
 
     @Override
-    public void prepareProcesses() {
-        System.out.println("IMPLEMENTAR");
+    public void prepareProcesses() throws EmptyQueueException {
+        while (!procesosNuevos.isEmpty()) {
+            Process p = procesosNuevos.dequeue();
+
+            //Calcula la prioridad y cambia el valor del atributo del proceso
+            p.calculatePriority();
+
+            p.setState(ProcessState.PENDING);
+
+            if (logger != null) {
+                logger.escribir(String.format(
+                        "NEW->PENDING PROCESS: PID=%d | %s | USER:%s UID:%d | P=%d",
+                        p.getPid(),
+                        p.getName(),
+                        p.getUser().getAlias(),
+                        p.getUser().getUid(),
+                        p.getPriority()
+                ));
+            }
+
+            procesosPendientes.insert(p);
+        }
     }
 
     @Override
