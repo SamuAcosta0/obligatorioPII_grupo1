@@ -40,8 +40,8 @@ public class ProcessManagerImpl implements ProcessManager{
 
     @Override
     public void loadProcessAndUserData(String processCsvPath, String usersCsvPath) {
-        DataLoader.loadUsers(usersCsvPath, usuarios);
-        DataLoader.loadProcesses(processCsvPath, procesosNuevos, usuarios);
+        DataLoader.loadUsers(usersCsvPath, usuarios); //Se ingresa en el ProcessConsole la ruta del archivo y aquí se crea el hash de usuarios
+        DataLoader.loadProcesses(processCsvPath, procesosNuevos, usuarios); //Se ingresa en el ProcessConsole la ruta del archivo, y se envia la lista de usuarios llena y la lista de procesos nuevos
 
         System.out.println("Carga completada: " + usuarios.size()
                 + " usuarios, " + procesosNuevos.size() + " procesos nuevos.");

@@ -19,7 +19,7 @@ public class Process implements Comparable<Process> {
     private User terminatedBy;
 
     private MyList<Event> events;
-
+    //Se inicializa en 0 cada proceso antes de entrar a la queue de procesos, se calcula ahí
     public Process(int pid, String name, User user, ProcessState aNew) {
         this.pid        = pid;
         this.name       = name;
@@ -30,7 +30,7 @@ public class Process implements Comparable<Process> {
         this.terminatedBy = null;
         this.events     = new MyLinkedListImpl<>();
     }
-
+    //Calcular prioridad al cargar
     public void calculatePriority() {
         int nCPU  = 0;
         int nRAM  = 0;
