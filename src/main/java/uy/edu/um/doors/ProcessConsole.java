@@ -1,5 +1,7 @@
 package uy.edu.um.doors;
 
+import uy.edu.um.tad.stack.EmptyStackException;
+
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -119,7 +121,7 @@ public class ProcessConsole {
         }
     }
 
-    private void handleFinishCommand(String[] parts) {
+    private void handleFinishCommand(String[] parts) throws EmptyStackException {
         if (parts.length < 2) {
             System.out.println("Uso: pfinish OK | ERROR | TERM [UID]");
             return;
