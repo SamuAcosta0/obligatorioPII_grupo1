@@ -129,11 +129,17 @@ public class ProcessManagerImpl implements ProcessManager {
             // Registrar en log y mostrar en consola
             String logLine = procesoEnEjecucion.toStringExecuting();
             logger.escribir(logLine);
-            System.out.println(logLine);
 
-            // Imprimir eventos en consola
-            procesoEnEjecucion.printEvents();
+            String eventsLog = procesoEnEjecucion.getEventsAsLogString();
 
+            // Si hay múltiples eventos, getEventsAsLogString() devuelve saltos de línea
+            // logger.escribirLinea() escribe cada línea sin timestamp
+            String[] eventLines = eventsLog.split("\n");
+            for (String eventLine : eventLines) {
+                if (!eventLine.trim().isEmpty()) {
+                    logger.escribirLinea(eventLine);
+                }
+            }
 
         } catch (EmptyHeapException e) {
             System.err.println("Error al extraer proceso del heap: " + e.getMessage());

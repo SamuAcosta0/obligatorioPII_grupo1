@@ -70,6 +70,37 @@ public class Process implements Comparable<Process> {
         }
     }
 
+    public String getEventsAsLogString() {
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < events.size(); i++) {
+            Event e = events.get(i);
+
+            // Construir lista de instrucciones separadas por coma
+            MyList<String> instructions = e.getInstructions();
+            StringBuilder instrSb = new StringBuilder();
+            for (int j = 0; j < instructions.size(); j++) {
+                instrSb.append(instructions.get(j));
+                if (j < instructions.size() - 1) {
+                    instrSb.append(", ");
+                }
+            }
+
+            result.append(String.format(
+                    "EVENT: %s | Instructions[%s]",
+                    e.getType(),
+                    instrSb.toString()
+            ));
+
+            // Salto de línea entre eventos (no al final del último)
+            if (i < events.size() - 1) {
+                result.append("\n");
+            }
+        }
+
+        return result.toString();
+    }
+
     @Override
     public int compareTo(Process other) {
         return Integer.compare(this.priority, other.priority);
