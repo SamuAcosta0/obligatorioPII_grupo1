@@ -53,7 +53,7 @@ public class ProcessManagerImpl implements ProcessManager {
                 Process p = procesosFinalizados.pop();
 
                 // Usamos toStringStackOverflow() para el formato correcto
-                logger.escribir(p.toStringStackOverflow());
+                logger.escribirLinea(p.toStringStackOverflow());
             }
         } catch (EmptyStackException e) {
             System.out.println("ERROR: " + e.getMessage());
@@ -78,9 +78,6 @@ public class ProcessManagerImpl implements ProcessManager {
 
             DataLoader.loadUsers(usersCsvPath, usuarios); //Se ingresa en el ProcessConsole la ruta del archivo y aquí se crea el hash de usuarios
             DataLoader.loadProcesses(processCsvPath, procesosNuevos, usuarios); //Se ingresa en el ProcessConsole la ruta del archivo, y se envia la lista de usuarios llena y la lista de procesos nuevos
-
-            System.out.println("Carga completada: " + usuarios.size()
-                    + " usuarios, " + procesosNuevos.size() + " procesos nuevos.");
 
         } catch (IllegalArgumentException e) {
             System.out.println("ERROR: " + e.getMessage());
