@@ -60,11 +60,21 @@ public class Log {
 
         } catch (IOException e) {
             System.out.println("Error al escribir el log");
-            //puede suceder este error, si no se oudo crear el archivo, si falla la escritura
+            //puede suceder este error, si no se pudo crear el archivo, si falla la escritura
             // o si la ruta es invalida
         }
-
     }
 
+    //Sin timestamp para los eventos e instrucciones
+    public void escribirLinea(String linea) {
+        try {
+            FileWriter fw = new FileWriter(rutaArchivo, true);
+            PrintWriter pw = new PrintWriter(fw);
+            pw.println(linea);
+            pw.close();
+        } catch (IOException e) {
+            System.out.println("Error al escribir el log");
+        }
+    }
 
 }
