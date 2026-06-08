@@ -56,6 +56,19 @@ public class Process implements Comparable<Process> {
         }
     }
 
+    public void printEvents() {
+        for (int i = 0; i < events.size(); i++) {
+            Event e = events.get(i);
+            System.out.print("EVENT: " + e.getType() + " | Instructions [");
+            MyList<String> instructions = e.getInstructions();
+            for (int j = 0; j < instructions.size(); j++) {
+                System.out.print(instructions.get(j));
+                if (j < instructions.size() - 1)
+                    System.out.print(", ");
+            }
+            System.out.println("]");
+        }
+    }
 
     @Override
     public int compareTo(Process other) {
@@ -74,14 +87,50 @@ public class Process implements Comparable<Process> {
 
     public void addEvent(Event event)                 { this.events.add(event); }
 
-
-
+    // Para PENDING y EXECUTING en pstatus
     @Override
     public String toString() {
         return "PID=" + pid + " | " + name
                 + " | USER:" + user.getAlias()
                 + " UID:" + user.getUid()
                 + " | P=" + priority;
+    }
+
+    // Para FINISHED en pstatus
+    public String toStringFinished() {
+        return "PID=" + pid + " " + name
+                + " | STATE: " + finishType
+                + " | USER:" + user.getAlias()
+                + " UID:" + user.getUid();
+    }
+
+    // Para el log de pexecute
+    public String toStringExecuting() {
+        return "EXECUTING PROCESS: PID=" + pid
+                + " | USER:" + user.getAlias()
+                + " UID:" + user.getUid();
+    }
+
+    // Para el log de pfinish OK y ERROR
+    public String toStringEnding() {
+        return "ENDING PROCESS: PID=" + pid
+                + " | STATE: " + finishType;
+    }
+
+    // Para el log de pfinish TERM
+    public String toStringEndingTerminated() {
+        return "ENDING PROCESS: PID=" + pid
+                + " | STATE: TERMINATED by USER:"
+                + terminatedBy.getAlias()
+                + " UID:" + terminatedBy.getUid();
+    }
+
+    // Para el log de stack overflow
+    public String toStringStackOverflow() {
+        return "PID=" + pid + " " + name
+                + " | STATE: " + finishType
+                + " | USER:" + user.getAlias()
+                + " UID:" + user.getUid();
     }
 
 }

@@ -22,7 +22,7 @@ import uy.edu.um.entities.Log;
 import java.io.IOException;
 
 
-public class ProcessManagerImpl implements ProcessManager{
+public class ProcessManagerImpl implements ProcessManager {
 
     private MyQueue<Process> procesosNuevos;
     private MyHeap<Process> procesosPendientes;
@@ -33,7 +33,7 @@ public class ProcessManagerImpl implements ProcessManager{
 
     public ProcessManagerImpl() throws IOException {
         this.procesosNuevos = new MyQueueImpl<>();
-        this.procesosPendientes = new MyHeapImpl<>(false);
+        this.procesosPendientes = new MyHeapImpl<>(false); //HEAP DE PENDIENTES
         this.procesosFinalizados = new MyStackImpl<>();
         this.usuarios = new MyHashImpl<>();
         this.procesoEnEjecucion = null;
@@ -231,14 +231,43 @@ public class ProcessManagerImpl implements ProcessManager{
         procesoEnEjecucion = null;
     }
 
+    //Uso de interfaces para funciones largas.
+    //Recorrer mediante print
     @Override
     public void printStatus() {
-        System.out.println("IMPLEMENTAR");
+        System.out.println("PROCESS STATUS");
+
+        System.out.println("EXECUTING:");
+        if (procesoEnEjecucion != null) {
+            System.out.println(procesoEnEjecucion);
+        } else {
+            System.out.println("Ninguno");
+        }
+
+        System.out.println("PENDING:");
+        recorrerPendientes(procesosPendientes);
+
+        System.out.println("FINISHED:");
+        recorrerFinalizados(procesosFinalizados);
     }
 
     @Override
     public void printStatusVerbose() {
-        System.out.println("IMPLEMENTAR");
+        System.out.println("PROCESS STATUS VERBOSE");
+
+        System.out.println("EXECUTING:");
+        if (procesoEnEjecucion != null) {
+            System.out.println(procesoEnEjecucion);
+            procesoEnEjecucion.printEvents();
+        } else {
+            System.out.println("Ninguno");
+        }
+
+        System.out.println("PENDING:");
+        recorrerEventosPendientes(procesosPendientes);
+
+        System.out.println("FINISHED:");
+        recorrerEventosFinalizados(procesosFinalizados);
     }
 
     @Override
@@ -249,5 +278,99 @@ public class ProcessManagerImpl implements ProcessManager{
     @Override
     public void printStatusByProcess(int pid) {
         System.out.println("IMPLEMENTAR");
+    }
+
+
+////////////////////////////////// MÉTODOS DE RECORRIDA //////////////////////////////////////////////////////
+    private void recorrerEventosPendientes(MyHeap<Process> procesosPendientes) {
+        int size = procesosPendientes.size();
+        Process[] temp = new Process[size];
+        int count = 0;
+
+        while (!procesosPendientes.isEmpty()) {
+            try {
+                temp[count++] = procesosPendientes.remove();
+            } catch (EmptyHeapException e) {
+                break;
+            }
+        }
+
+        for (int i = 0; i < count; i++) {
+            System.out.println(temp[i]);
+            temp[i].printEvents();
+        }
+
+        for (int i = 0; i < count; i++) {
+            procesosPendientes.insert(temp[i]);
+        }
+    }
+
+    private void recorrerEventosFinalizados(MyStack<Process> procesosFinalizados) {
+        int stackSize = procesosFinalizados.size();
+        Process[] temp = new Process[stackSize];
+        int count = 0;
+
+        while (!procesosFinalizados.isEmpty()) {
+            try {
+                temp[count++] = procesosFinalizados.pop();
+            } catch (EmptyStackException e) {
+                break;
+            }
+        }
+
+        for (int i = 0; i < count; i++) {
+            System.out.println(temp[i]);
+            temp[i].printEvents();
+        }
+
+        for (int i = count - 1; i >= 0; i--) {
+            procesosFinalizados.push(temp[i]);
+        }
+    }
+
+    // Recorre el heap, ejecuta una acción por cada proceso, y lo restaura
+    private void recorrerPendientes(MyHeap<Process> procesosPendientes) {
+        int size = procesosPendientes.size();
+        Process[] temp = new Process[size];
+        int count = 0;
+
+        while (!procesosPendientes.isEmpty()) {
+            try {
+                temp[count++] = procesosPendientes.remove();
+            } catch (EmptyHeapException e) {
+                break;
+            }
+        }
+
+        for (int i = 0; i < count; i++) {
+            System.out.println(temp[i]);
+        }
+
+        for (int i = 0; i < count; i++) {
+            procesosPendientes.insert(temp[i]);
+        }
+    }
+
+    // Recorre el stack, ejecuta una acción por cada proceso, y lo restaura
+    private void recorrerFinalizados(MyStack<Process> procesosFinalizados) {
+        int stackSize = procesosFinalizados.size();
+        Process[] temp = new Process[stackSize];
+        int count = 0;
+
+        while (!procesosFinalizados.isEmpty()) {
+            try {
+                temp[count++] = procesosFinalizados.pop();
+            } catch (EmptyStackException e) {
+                break;
+            }
+        }
+
+        for (int i = 0; i < count; i++) {
+            System.out.println(temp[i].toStringFinished());
+        }
+
+        for (int i = count - 1; i >= 0; i--) {
+            procesosFinalizados.push(temp[i]);
+        }
     }
 }
