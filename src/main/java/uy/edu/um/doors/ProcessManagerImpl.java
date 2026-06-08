@@ -188,6 +188,7 @@ public class ProcessManagerImpl implements ProcessManager {
         // Hacer esta verificación antes del push al stack
         pushToFinishedStack(procesoEnEjecucion);
 
+        //limpiamos
         procesoEnEjecucion = null;
     }
 
