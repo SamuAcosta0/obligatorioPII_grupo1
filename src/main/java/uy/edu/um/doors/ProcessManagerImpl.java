@@ -170,7 +170,7 @@ public class ProcessManagerImpl implements ProcessManager{
         //como es uno a la vez, queda null
         procesoEnEjecucion = null;
     }
-
+//hola
 
     @Override
     public void finishProcessError() {
