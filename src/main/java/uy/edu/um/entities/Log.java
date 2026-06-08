@@ -65,7 +65,7 @@ public class Log {
         }
     }
 
-    //Sin timestamp para los eventos e instrucciones
+    //Sin timestamp para los eventos y stack overflow
     public void escribirLinea(String linea) {
         try {
             FileWriter fw = new FileWriter(rutaArchivo, true);

@@ -1,5 +1,7 @@
 package uy.edu.um.entities;
 
+import java.util.Objects;
+
 public class User {
 
     private int uid;
@@ -21,6 +23,8 @@ public class User {
         return "USER:" + alias + " UID:" + uid;
     }
 
-
-    //AÑADIR HASHCODE
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(uid);
+    }
 }
