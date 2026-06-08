@@ -58,15 +58,7 @@ public class Process implements Comparable<Process> {
 
     public void printEvents() {
         for (int i = 0; i < events.size(); i++) {
-            Event e = events.get(i);
-            System.out.print("EVENT: " + e.getType() + " | Instructions [");
-            MyList<String> instructions = e.getInstructions();
-            for (int j = 0; j < instructions.size(); j++) {
-                System.out.print(instructions.get(j));
-                if (j < instructions.size() - 1)
-                    System.out.print(", ");
-            }
-            System.out.println("]");
+            System.out.println(events.get(i)); // delega a Event.toString()
         }
     }
 
@@ -74,23 +66,7 @@ public class Process implements Comparable<Process> {
         StringBuilder result = new StringBuilder();
 
         for (int i = 0; i < events.size(); i++) {
-            Event e = events.get(i);
-
-            // Construir lista de instrucciones separadas por coma
-            MyList<String> instructions = e.getInstructions();
-            StringBuilder instrSb = new StringBuilder();
-            for (int j = 0; j < instructions.size(); j++) {
-                instrSb.append(instructions.get(j));
-                if (j < instructions.size() - 1) {
-                    instrSb.append(", ");
-                }
-            }
-
-            result.append(String.format(
-                    "EVENT: %s | Instructions[%s]",
-                    e.getType(),
-                    instrSb.toString()
-            ));
+            result.append(events.get(i).toString()); // delega a Event.toString()
 
             // Salto de línea entre eventos (no al final del último)
             if (i < events.size() - 1) {
