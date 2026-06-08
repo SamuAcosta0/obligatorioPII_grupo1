@@ -1,7 +1,6 @@
 package uy.edu.um.doors;
 import uy.edu.um.entities.Process;
 import uy.edu.um.entities.User;
-import uy.edu.um.entities.Event;
 import uy.edu.um.exceptions.ProcessNotFoundException;
 import uy.edu.um.exceptions.UserProcessNotFoundException;
 import uy.edu.um.exceptions.NoProcessesException;
@@ -20,8 +19,7 @@ import uy.edu.um.tad.hash.MyHashImpl;
 import uy.edu.um.entities.*;
 import uy.edu.um.importer.DataLoader;
 import uy.edu.um.entities.Log;
-import uy.edu.um.exceptions.NoRunningProcessException;
-import java.io.IOException;
+import uy.edu.um.exceptions.ExecutingProcessException;
 
 
 public class ProcessManagerImpl implements ProcessManager {
@@ -119,7 +117,7 @@ public class ProcessManagerImpl implements ProcessManager {
                 throw new NoProcessesException("No hay procesos pendientes para ejecutar.");
 
             if (procesoEnEjecucion != null)
-                throw new NoRunningProcessException("Ya hay un proceso en ejecución: PID=" + procesoEnEjecucion.getPid());
+                throw new ExecutingProcessException("Ya hay un proceso en ejecución: PID=" + procesoEnEjecucion.getPid());
 
             // Extrae el de mayor prioridad
             procesoEnEjecucion = procesosPendientes.remove();
@@ -140,7 +138,7 @@ public class ProcessManagerImpl implements ProcessManager {
                 }
             }
 
-        } catch (NoProcessesException | NoRunningProcessException | EmptyHeapException e) {
+        } catch (NoProcessesException | ExecutingProcessException | EmptyHeapException e) {
             System.out.println("ERROR: " + e.getMessage());
         }
     }
@@ -149,7 +147,7 @@ public class ProcessManagerImpl implements ProcessManager {
         try {
             // vemos que exista un proceso ejecutandose
             if (procesoEnEjecucion == null)
-                throw new NoRunningProcessException("No hay proceso en ejecución.");
+                throw new ExecutingProcessException("No hay proceso en ejecución.");
 
             // el proceso pasa a estado FINISHED
             procesoEnEjecucion.setState(ProcessState.FINISHED);
@@ -166,7 +164,7 @@ public class ProcessManagerImpl implements ProcessManager {
             //como es uno a la vez, queda null
             procesoEnEjecucion = null;
 
-        } catch (NoRunningProcessException e) {
+        } catch (ExecutingProcessException e) {
             System.out.println("ERROR: " + e.getMessage());
         }
     }
@@ -176,7 +174,7 @@ public class ProcessManagerImpl implements ProcessManager {
         try {
             // verificamos que exista un proceso ejecutándose
             if (procesoEnEjecucion == null)
-                throw new NoRunningProcessException("No hay proceso en ejecución.");
+                throw new ExecutingProcessException("No hay proceso en ejecución.");
 
             // el proceso pasa a estado FINISHED
             procesoEnEjecucion.setState(ProcessState.FINISHED);
@@ -193,7 +191,7 @@ public class ProcessManagerImpl implements ProcessManager {
             //limpiamos
             procesoEnEjecucion = null;
 
-        } catch (NoRunningProcessException e) {
+        } catch (ExecutingProcessException e) {
             System.out.println("ERROR: " + e.getMessage());
         }
     }
@@ -203,7 +201,7 @@ public class ProcessManagerImpl implements ProcessManager {
         try {
             // verificamos que exista un proceso ejecutándose
             if (procesoEnEjecucion == null)
-                throw new NoRunningProcessException("No hay proceso en ejecución.");
+                throw new ExecutingProcessException("No hay proceso en ejecución.");
 
             // buscamos el usuario que forzó la terminación
             User user = usuarios.get(uid);
@@ -229,10 +227,11 @@ public class ProcessManagerImpl implements ProcessManager {
 
             procesoEnEjecucion = null;
 
-        } catch (NoRunningProcessException | UserNotFoundException e) {
+        } catch (ExecutingProcessException | UserNotFoundException e) {
             System.out.println("ERROR: " + e.getMessage());
         }
     }
+
     @Override
     public void printStatus() {
         System.out.println("PROCESS STATUS");
@@ -241,14 +240,22 @@ public class ProcessManagerImpl implements ProcessManager {
         if (procesoEnEjecucion != null) {
             System.out.println(procesoEnEjecucion);
         } else {
-            System.out.println("Ninguno");
+            System.out.println("No hay proceso en ejecución.");
         }
 
         System.out.println("PENDING:");
-        recorrerPendientes(procesosPendientes);
+        if (procesosPendientes.isEmpty()) {
+            System.out.println("No hay procesos pendientes.");
+        } else {
+            recorrerPendientes(procesosPendientes);
+        }
 
         System.out.println("FINISHED:");
-        recorrerFinalizados(procesosFinalizados);
+        if (procesosFinalizados.isEmpty()) {
+            System.out.println("No hay procesos finalizados.");
+        } else {
+            recorrerFinalizados(procesosFinalizados);
+        }
     }
 
     @Override
@@ -260,14 +267,22 @@ public class ProcessManagerImpl implements ProcessManager {
             System.out.println(procesoEnEjecucion);
             procesoEnEjecucion.printEvents();
         } else {
-            System.out.println("Ninguno");
+            System.out.println("No hay proceso en ejecución.");
         }
 
         System.out.println("PENDING:");
-        recorrerEventosPendientes(procesosPendientes);
+        if (procesosPendientes.isEmpty()) {
+            System.out.println("No hay procesos pendientes.");
+        } else {
+            recorrerEventosPendientes(procesosPendientes);
+        }
 
         System.out.println("FINISHED:");
-        recorrerEventosFinalizados(procesosFinalizados);
+        if (procesosFinalizados.isEmpty()) {
+            System.out.println("No hay procesos finalizados.");
+        } else {
+            recorrerEventosFinalizados(procesosFinalizados);
+        }
     }
 
     @Override
@@ -306,16 +321,24 @@ public class ProcessManagerImpl implements ProcessManager {
                 System.out.println("  " + procesoEnEjecucion.toString());
                 procesoEnEjecucion.printEvents();
             } else {
-                System.out.println("  (ninguno)");
+                System.out.println("  No hay proceso en ejecución para este usuario.");
             }
 
             // ─── PENDING ─────────────────────────────────────
             System.out.println("PENDING:");
-            recorrerPendientes(procesosPendientes, uid, null, false);
+            if (procesosPendientes.isEmpty()) {
+                System.out.println("  No hay procesos pendientes.");
+            } else {
+                recorrerPendientes(procesosPendientes, uid, null, false);
+            }
 
-            // ─── FINISHED ─────────────────────────────────────
+            // ─── FINISHED ────────────────────────────────────
             System.out.println("FINISHED:");
-            recorrerFinalizados(procesosFinalizados, uid, null, false);
+            if (procesosFinalizados.isEmpty()) {
+                System.out.println("  No hay procesos finalizados.");
+            } else {
+                recorrerFinalizados(procesosFinalizados, uid, null, false);
+            }
 
         } catch (UserProcessNotFoundException e) {
             System.out.println(e.getMessage());
@@ -354,13 +377,21 @@ public class ProcessManagerImpl implements ProcessManager {
 
             if (existeEnPendientesPorPid(pid)) {
                 System.out.println("PENDING:");
-                recorrerEventosPendientes(procesosPendientes, null, pid, true);
+                if (procesosPendientes.isEmpty()) {
+                    System.out.println("No hay procesos pendientes.");
+                } else {
+                    recorrerEventosPendientes(procesosPendientes, null, pid, true);
+                }
                 return;
             }
 
             if (existeEnFinalizadosPorPid(pid)) {
                 System.out.println("FINISHED:");
-                recorrerEventosFinalizados(procesosFinalizados, null, pid, true);
+                if (procesosFinalizados.isEmpty()) {
+                    System.out.println("No hay procesos finalizados.");
+                } else {
+                    recorrerEventosFinalizados(procesosFinalizados, null, pid, true);
+                }
                 return;
             }
 
