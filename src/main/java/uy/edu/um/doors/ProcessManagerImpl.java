@@ -7,6 +7,7 @@ import uy.edu.um.tad.heap.EmptyHeapException;
 import uy.edu.um.tad.list.MyList;
 import uy.edu.um.tad.list.MyLinkedListImpl;
 import uy.edu.um.tad.queue.EmptyQueueException;
+import uy.edu.um.tad.stack.EmptyStackException;
 import uy.edu.um.tad.stack.MyStack;
 import uy.edu.um.tad.stack.MyStackImpl;
 import uy.edu.um.tad.queue.MyQueue;
@@ -36,6 +37,33 @@ public class ProcessManagerImpl implements ProcessManager{
         this.usuarios = new MyHashImpl<>();
         this.procesoEnEjecucion = null;
         this.logger = new Log();
+    }
+
+    // Metodo auxiliar para el log cuando se llena el stack de procesos finalizados
+    private void logStackOverflow() throws EmptyStackException {
+        if (logger == null) return;
+
+        // Vaciamos la pila con pop() y logueamos en cada iteración
+        while (!procesosFinalizados.isEmpty()) {
+            Process p = procesosFinalizados.pop();
+
+            logger.escribir(String.format(
+                    "Finished process stack overflow PID=%d %s | STATE: %s | USER:%s UID:%d",
+                    p.getPid(),
+                    p.getName(),
+                    p.getFinishType(),
+                    p.getUser().getAlias(),
+                    p.getUser().getUid()
+            ));
+        }
+    }
+
+    // Metodo auxiliar que agrega un proceso al stack y verifica overflow
+    private void pushToFinishedStack(Process process) throws EmptyStackException {
+        if (procesosFinalizados.size() >= MAX_FINISHED_PROCESS_ON_RAM) {
+            logStackOverflow();
+        }
+        procesosFinalizados.push(process);
     }
 
     @Override
@@ -78,18 +106,24 @@ public class ProcessManagerImpl implements ProcessManager{
     }
 
     @Override
-    public void finishProcessOk() {
-        System.out.println("IMPLEMENTAR");
+    public void finishProcessOk() throws EmptyStackException {
+
+        // Hacer esta verificación antes del push al stack
+        pushToFinishedStack(procesoEnEjecucion);
     }
 
     @Override
-    public void finishProcessError() {
-        System.out.println("IMPLEMENTAR");
+    public void finishProcessError() throws EmptyStackException {
+
+        // Hacer esta verificación antes del push al stack
+        pushToFinishedStack(procesoEnEjecucion);
     }
 
     @Override
-    public void terminateProcess(int uid) {
-        System.out.println("IMPLEMENTAR");
+    public void terminateProcess(int uid) throws EmptyStackException {
+
+        // Hacer esta verificación antes del push al stack
+        pushToFinishedStack(procesoEnEjecucion);
     }
 
     @Override
