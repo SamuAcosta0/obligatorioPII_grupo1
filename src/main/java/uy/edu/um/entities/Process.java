@@ -74,6 +74,8 @@ public class Process implements Comparable<Process> {
 
     public void addEvent(Event event)                 { this.events.add(event); }
 
+
+
     @Override
     public String toString() {
         return "PID=" + pid + " | " + name
