@@ -9,8 +9,8 @@ public interface ProcessManager {
     public void prepareProcesses() throws EmptyQueueException;
     public void executeNextProcess();
     public void finishProcessOk() throws EmptyStackException;
-    public void finishProcessError();
-    public void terminateProcess(int uid);
+    public void finishProcessError() throws EmptyStackException;
+    public void terminateProcess(int uid) throws EmptyStackException;
     public void printStatus();
     public void printStatusVerbose();
     public void printStatusByUser(int uid);

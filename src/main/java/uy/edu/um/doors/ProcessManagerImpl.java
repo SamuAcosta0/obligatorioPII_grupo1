@@ -40,6 +40,33 @@ public class ProcessManagerImpl implements ProcessManager{
         this.logger = new Log();
     }
 
+    // Metodo auxiliar para el log cuando se llena el stack de procesos finalizados
+    private void logStackOverflow() throws EmptyStackException {
+        if (logger == null) return;
+
+        // Vaciamos la pila con pop() y logueamos en cada iteración
+        while (!procesosFinalizados.isEmpty()) {
+            Process p = procesosFinalizados.pop();
+
+            logger.escribir(String.format(
+                    "Finished process stack overflow PID=%d %s | STATE: %s | USER:%s UID:%d",
+                    p.getPid(),
+                    p.getName(),
+                    p.getFinishType(),
+                    p.getUser().getAlias(),
+                    p.getUser().getUid()
+            ));
+        }
+    }
+
+    // Metodo auxiliar que agrega un proceso al stack y verifica overflow
+    private void pushToFinishedStack(Process process) throws EmptyStackException {
+        if (procesosFinalizados.size() >= MAX_FINISHED_PROCESS_ON_RAM) {
+            logStackOverflow();
+        }
+        procesosFinalizados.push(process);
+    }
+
     @Override
     public void loadProcessAndUserData(String processCsvPath, String usersCsvPath) {
         DataLoader.loadUsers(usersCsvPath, usuarios); //Se ingresa en el ProcessConsole la ruta del archivo y aquí se crea el hash de usuarios
@@ -123,6 +150,8 @@ public class ProcessManagerImpl implements ProcessManager{
     @Override
     public void finishProcessOk() throws EmptyStackException {
 
+        // Hacer esta verificación antes del push al stack
+        pushToFinishedStack(procesoEnEjecucion);
         // vemos quee exista un proceso ejecutandose
         if (procesoEnEjecucion == null) {
             System.out.println("No hay proceso en ejecución.");
@@ -173,6 +202,17 @@ public class ProcessManagerImpl implements ProcessManager{
 //hola
 
     @Override
+    public void finishProcessError() throws EmptyStackException {
+
+        // Hacer esta verificación antes del push al stack
+        pushToFinishedStack(procesoEnEjecucion);
+    }
+
+    @Override
+    public void terminateProcess(int uid) throws EmptyStackException {
+
+        // Hacer esta verificación antes del push al stack
+        pushToFinishedStack(procesoEnEjecucion);
     public void finishProcessError() {
 
         // verificamos que exista un proceso ejecutándose
