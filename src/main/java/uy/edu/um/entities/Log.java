@@ -1,5 +1,7 @@
 package uy.edu.um.entities;
 
+import uy.edu.um.tad.list.MyList;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,7 +20,7 @@ public class Log {
     private String rutaArchivo;
     private String nombreArchivo;
 
-    public Log() throws IOException {
+    public Log() {
         String fechaHoy = LocalDate.now().format(FORMATO_FECHA);
 
         this.nombreArchivo = "DOORS_PROCESS_LOG_" + fechaHoy + ".txt";
@@ -27,6 +29,16 @@ public class Log {
         this.rutaArchivo = "src/main/" + nombreArchivo;
         //esta es la ruta completa del archivo, el programa se ejecuta desde el directorio del trabajo
         //desde la raíz del proyecto
+
+        try {
+            // intenta crear el archivo si no existe
+            java.nio.file.Path path = java.nio.file.Paths.get(rutaArchivo);
+            if (!java.nio.file.Files.exists(path)) {
+                java.nio.file.Files.createFile(path);
+            }
+        } catch (IOException e) {
+            System.err.println("Error al crear el archivo de log: " + e.getMessage());
+        }
     }
 
     private String generarTimestamp() {
@@ -53,4 +65,6 @@ public class Log {
         }
 
     }
+
+
 }
