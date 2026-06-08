@@ -18,12 +18,11 @@ import uy.edu.um.tad.hash.MyHashImpl;
 import uy.edu.um.entities.*;
 import uy.edu.um.importer.DataLoader;
 import uy.edu.um.entities.Log;
-import uy.edu.um.exceptions.ExecutingProcessNotFoundException;
 
 import java.io.IOException;
 
 
-public class ProcessManagerImpl implements ProcessManager{
+public class ProcessManagerImpl implements ProcessManager {
 
     private MyQueue<Process> procesosNuevos;
     private MyHeap<Process> procesosPendientes;
@@ -34,7 +33,7 @@ public class ProcessManagerImpl implements ProcessManager{
 
     public ProcessManagerImpl() throws IOException {
         this.procesosNuevos = new MyQueueImpl<>();
-        this.procesosPendientes = new MyHeapImpl<>(false);
+        this.procesosPendientes = new MyHeapImpl<>(false); //HEAP DE PENDIENTES
         this.procesosFinalizados = new MyStackImpl<>();
         this.usuarios = new MyHashImpl<>();
         this.procesoEnEjecucion = null;
@@ -42,26 +41,28 @@ public class ProcessManagerImpl implements ProcessManager{
     }
 
     // Metodo auxiliar para el log cuando se llena el stack de procesos finalizados
-    private void logStackOverflow() throws EmptyStackException {
-        if (logger == null) return;
+    private void logStackOverflow() {
+        try {
+            // Vaciamos la pila con pop() y logueamos en cada iteración
+            while (!procesosFinalizados.isEmpty()) {
+                Process p = procesosFinalizados.pop();
 
-        // Vaciamos la pila con pop() y logueamos en cada iteración
-        while (!procesosFinalizados.isEmpty()) {
-            Process p = procesosFinalizados.pop();
-
-            logger.escribir(String.format(
-                    "Finished process stack overflow PID=%d %s | STATE: %s | USER:%s UID:%d",
-                    p.getPid(),
-                    p.getName(),
-                    p.getFinishType(),
-                    p.getUser().getAlias(),
-                    p.getUser().getUid()
-            ));
+                logger.escribir(String.format(
+                        "Finished process stack overflow PID=%d %s | STATE: %s | USER:%s UID:%d",
+                        p.getPid(),
+                        p.getName(),
+                        p.getFinishType(),
+                        p.getUser().getAlias(),
+                        p.getUser().getUid()
+                ));
+            }
+        } catch (EmptyStackException e) {
+            System.out.println("Error:" + e.getMessage());
         }
     }
 
     // Metodo auxiliar que agrega un proceso al stack y verifica overflow
-    private void pushToFinishedStack(Process process) throws EmptyStackException {
+    private void pushToFinishedStack(Process process) {
         if (procesosFinalizados.size() >= MAX_FINISHED_PROCESS_ON_RAM) {
             logStackOverflow();
         }
@@ -78,27 +79,31 @@ public class ProcessManagerImpl implements ProcessManager{
     }
 
     @Override
-    public void prepareProcesses() throws EmptyQueueException {
-        while (!procesosNuevos.isEmpty()) {
-            Process p = procesosNuevos.dequeue();
+    public void prepareProcesses() {
+        try {
+            while (!procesosNuevos.isEmpty()) {
+                Process p = procesosNuevos.dequeue();
 
-            //Calcula la prioridad y cambia el valor del atributo del proceso
-            p.calculatePriority();
+                // Calcula la prioridad y cambia el valor del atributo del proceso
+                p.calculatePriority();
 
-            p.setState(ProcessState.PENDING);
+                p.setState(ProcessState.PENDING);
 
-            if (logger != null) { //revisar excepcion, excepcion
-                logger.escribir(String.format(
-                        "NEW->PENDING PROCESS: PID=%d | %s | USER:%s UID:%d | P=%d",
-                        p.getPid(),
-                        p.getName(),
-                        p.getUser().getAlias(),
-                        p.getUser().getUid(),
-                        p.getPriority()
-                ));
+                if (logger != null) {
+                    logger.escribir(String.format(
+                            "NEW->PENDING PROCESS: PID=%d | %s | USER:%s UID:%d | P=%d",
+                            p.getPid(),
+                            p.getName(),
+                            p.getUser().getAlias(),
+                            p.getUser().getUid(),
+                            p.getPriority()
+                    ));
+                }
+
+                procesosPendientes.insert(p);
             }
-
-            procesosPendientes.insert(p);
+        } catch (EmptyQueueException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
@@ -106,82 +111,67 @@ public class ProcessManagerImpl implements ProcessManager{
     public void executeNextProcess() {
         //estan en el heap, la raiz tiene mayor prioridad
         //sacamos de los procesos pendientes el que tiene mayor prioridad
-        //private Process procesoEnEjecucion;
-        //en el log se deben guardar distintos eventos
-        while(!procesosPendientes.isEmpty()) {
-            Process proceso = procesosPendientes.remove();
-            //sacamos del heap el proceso de mayor prioridad
-
-            procesoEnEjecucion = proceso;
-            //guardamos el proceso como proceso actualmente en ejecucion
-
-            //cambiar el estado del proceso a RUNNING
-            proceso.setState(ProcessState.RUNNING);
-
-            logger.escribir(String.format(
-                    "EXECUTING PROCESS: PID=%d | %s | USER:%s UID:%d",
-                    proceso.getPid(),
-                    proceso.getName(),
-                    proceso.getUser().getAlias(),
-                    proceso.getUser().getUid()
-            ));
-
-            MyList<Event> events = proceso.getEvents();
-            //conseguimos los eventos para poder completar la salida del log
-
-            for (int i = 0; i < events.size(); i++) {
-                Event evento = events.get(i);
-
-                logger.escribir(
-                        "EVENT: " + evento.getType()
-                        + "| Instructions "
-                        + evento.getInstructions()
-                );
-
-            }
+        if (procesosPendientes.isEmpty()) {
+            System.out.println("No hay procesos pendientes para ejecutar.");
+            return;
         }
+
+        if (procesoEnEjecucion != null) {
+            System.out.println("Ya hay un proceso en ejecución.");
+            return;
+        }
+
+        // Extrae el de mayor prioridad
+        procesoEnEjecucion = procesosPendientes.remove();
+        procesoEnEjecucion.setState(ProcessState.RUNNING);
+
+        logger.escribir(String.format(
+                "EXECUTING PROCESS: PID=%d | USER:%s UID:%d",
+                procesoEnEjecucion.getPid(),
+                procesoEnEjecucion.getUser().getAlias(),
+                procesoEnEjecucion.getUser().getUid()
+        ));
+
+        //Agregar impresión de instrucciones por evento hecho por angel
     }
 
     @Override
-    public void finishProcessOk() throws EmptyStackException, ExecutingProcessNotFoundException {
-        try {
+    public void finishProcessOk() {
 
-            if (procesoEnEjecucion == null) {
-                throw new ExecutingProcessNotFoundException("No hay procesos en ejecución");
-            }
+        // vemos quee exista un proceso ejecutandose
+        if (procesoEnEjecucion == null) {
+            System.out.println("No hay proceso en ejecución.");
+            return;
+        } // crear una excepcion para esto
 
-            // el proceso pasa a estado FINISHED
-            procesoEnEjecucion.setState(ProcessState.FINISHED);
 
-            // guardamos el tipo de finalización
-            procesoEnEjecucion.setFinishType(FinishType.OK);
+        // el proceso pasa a estado FINISHED
+        procesoEnEjecucion.setState(ProcessState.FINISHED);
 
-            // registramos el evento en el log
-            logger.escribir(String.format(
-                    "ENDING PROCESS: PID=%d | STATE: OK",
-                    procesoEnEjecucion.getPid()
-            ));
+        // guardamos el tipo de finalización
+        procesoEnEjecucion.setFinishType(FinishType.OK);
 
-            // hacer esta verificación antes del push al stack
-            pushToFinishedStack(procesoEnEjecucion);
+        // registramos el evento en el log
+        logger.escribir(String.format(
+                "ENDING PROCESS: PID=%d | STATE: OK",
+                procesoEnEjecucion.getPid()
+        ));
 
-            // como es uno a la vez, queda null
-            procesoEnEjecucion = null;
+        // Hacer esta verificación antes del push al stack
+        pushToFinishedStack(procesoEnEjecucion);
 
-        } catch (ExecutingProcessNotFoundException e) {
-            System.out.println(e.getMessage());
-            throw e;
-        }
+        //como es uno a la vez, queda null
+        procesoEnEjecucion = null;
     }
 
     @Override
-    public void finishProcessError() throws EmptyStackException {
+    public void finishProcessError() {
 
         // verificamos que exista un proceso ejecutándose
         if (procesoEnEjecucion == null) {
             System.out.println("No hay proceso en ejecución.");
             return;
-        } //excepcion proceso en ejecucion nulo
+        }
 
         // el proceso pasa a estado FINISHED
         procesoEnEjecucion.setState(ProcessState.FINISHED);
@@ -203,13 +193,12 @@ public class ProcessManagerImpl implements ProcessManager{
     }
 
     @Override
-    public void terminateProcess(int uid) throws EmptyStackException {
+    public void terminateProcess(int uid) {
         // verificamos que exista un proceso ejecutándose
         if (procesoEnEjecucion == null) {
             System.out.println("No hay proceso en ejecución.");
             return;
-        } //proceso en ejecucion nulo
-
+        } //excepcion
 
         // buscamos el usuario que forzó la terminación
         User user = usuarios.get(uid);
@@ -218,7 +207,7 @@ public class ProcessManagerImpl implements ProcessManager{
         if (user == null) {
             System.out.println("No existe usuario con UID=" + uid);
             return;
-        } //excepcion usuario nulo
+        } //excepcion
 
         // el proceso pasa a estado FINISHED
         procesoEnEjecucion.setState(ProcessState.FINISHED);
@@ -237,20 +226,49 @@ public class ProcessManagerImpl implements ProcessManager{
                 user.getUid()
         ));
 
-        // hacer esta verificación antes del push al stack
+        // Hacer esta verificación antes del push al stack
         pushToFinishedStack(procesoEnEjecucion);
 
         procesoEnEjecucion = null;
     }
 
+    //Uso de interfaces para funciones largas.
+    //Recorrer mediante print
     @Override
     public void printStatus() {
-        System.out.println("IMPLEMENTAR");
+        System.out.println("PROCESS STATUS");
+
+        System.out.println("EXECUTING:");
+        if (procesoEnEjecucion != null) {
+            System.out.println(procesoEnEjecucion);
+        } else {
+            System.out.println("Ninguno");
+        }
+
+        System.out.println("PENDING:");
+        recorrerPendientes(procesosPendientes);
+
+        System.out.println("FINISHED:");
+        recorrerFinalizados(procesosFinalizados);
     }
 
     @Override
     public void printStatusVerbose() {
-        System.out.println("IMPLEMENTAR");
+        System.out.println("PROCESS STATUS VERBOSE");
+
+        System.out.println("EXECUTING:");
+        if (procesoEnEjecucion != null) {
+            System.out.println(procesoEnEjecucion);
+            procesoEnEjecucion.printEvents();
+        } else {
+            System.out.println("Ninguno");
+        }
+
+        System.out.println("PENDING:");
+        recorrerEventosPendientes(procesosPendientes);
+
+        System.out.println("FINISHED:");
+        recorrerEventosFinalizados(procesosFinalizados);
     }
 
     @Override
@@ -261,5 +279,99 @@ public class ProcessManagerImpl implements ProcessManager{
     @Override
     public void printStatusByProcess(int pid) {
         System.out.println("IMPLEMENTAR");
+    }
+
+
+////////////////////////////////// MÉTODOS DE RECORRIDA //////////////////////////////////////////////////////
+    private void recorrerEventosPendientes(MyHeap<Process> procesosPendientes) {
+        int size = procesosPendientes.size();
+        Process[] temp = new Process[size];
+        int count = 0;
+
+        while (!procesosPendientes.isEmpty()) {
+            try {
+                temp[count++] = procesosPendientes.remove();
+            } catch (EmptyHeapException e) {
+                break;
+            }
+        }
+
+        for (int i = 0; i < count; i++) {
+            System.out.println(temp[i]);
+            temp[i].printEvents();
+        }
+
+        for (int i = 0; i < count; i++) {
+            procesosPendientes.insert(temp[i]);
+        }
+    }
+
+    private void recorrerEventosFinalizados(MyStack<Process> procesosFinalizados) {
+        int stackSize = procesosFinalizados.size();
+        Process[] temp = new Process[stackSize];
+        int count = 0;
+
+        while (!procesosFinalizados.isEmpty()) {
+            try {
+                temp[count++] = procesosFinalizados.pop();
+            } catch (EmptyStackException e) {
+                break;
+            }
+        }
+
+        for (int i = 0; i < count; i++) {
+            System.out.println(temp[i]);
+            temp[i].printEvents();
+        }
+
+        for (int i = count - 1; i >= 0; i--) {
+            procesosFinalizados.push(temp[i]);
+        }
+    }
+
+    // Recorre el heap, ejecuta una acción por cada proceso, y lo restaura
+    private void recorrerPendientes(MyHeap<Process> procesosPendientes) {
+        int size = procesosPendientes.size();
+        Process[] temp = new Process[size];
+        int count = 0;
+
+        while (!procesosPendientes.isEmpty()) {
+            try {
+                temp[count++] = procesosPendientes.remove();
+            } catch (EmptyHeapException e) {
+                break;
+            }
+        }
+
+        for (int i = 0; i < count; i++) {
+            System.out.println(temp[i]);
+        }
+
+        for (int i = 0; i < count; i++) {
+            procesosPendientes.insert(temp[i]);
+        }
+    }
+
+    // Recorre el stack, ejecuta una acción por cada proceso, y lo restaura
+    private void recorrerFinalizados(MyStack<Process> procesosFinalizados) {
+        int stackSize = procesosFinalizados.size();
+        Process[] temp = new Process[stackSize];
+        int count = 0;
+
+        while (!procesosFinalizados.isEmpty()) {
+            try {
+                temp[count++] = procesosFinalizados.pop();
+            } catch (EmptyStackException e) {
+                break;
+            }
+        }
+
+        for (int i = 0; i < count; i++) {
+            System.out.println(temp[i].toStringFinished());
+        }
+
+        for (int i = count - 1; i >= 0; i--) {
+            procesosFinalizados.push(temp[i]);
+        }
     }
 }
