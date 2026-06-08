@@ -30,9 +30,9 @@ public class DataLoader {
                 String[] fields = line.split(";");
                 if (fields.length < 3) continue; // se la fila no tiene los datos completo no la uso
                 //asigno a cada atributo de usuario su respectivo valor en el csv
-                int uid        = Integer.parseInt(fields[0].trim());
-                String alias   = fields[1].trim();
-                UserType type  = UserType.valueOf(fields[2].trim());
+                int uid = Integer.parseInt(fields[0].trim());
+                String alias = fields[1].trim();
+                UserType type = UserType.valueOf(fields[2].trim());
                 //coloco en el hash en función de del uid el nuevo usuario
                 userTable.put(uid, new User(uid, alias, type));
             }
@@ -67,31 +67,29 @@ public class DataLoader {
         }
     }
 
-    // ─── Parsea una línea completa → Process ───────────────────
     private static Process parseLine(String line, MyHash userTable) throws OwnerNotFoundException {
+        // split por ; con límite 4 para no partir el bloque de eventos
+        // "26362;98;python.exe;{RAM:[...]# CPU:[...]}"
+        String[] fields = line.split(";", 4);
+        if (fields.length < 4) return null; //Si la lista de procesos se encuentra incompleta, se retorna null
+
+        //Luego de realizados los cortes con el line.split, se toma cada campo como un atributo
+        //para la creación del proceso
+        int pid = Integer.parseInt(fields[0].trim());
+        int uid = Integer.parseInt(fields[1].trim());
+        String name = fields[2].trim();
+        //Se crea un atributo bloque que contiene todos los eventos del proceso aún sin separar
+        String block = fields[3].trim(); // "{RAM:[...]# CPU:[...]}"
+
+        ///---En caso de que el usuario no exista, el proceso es omitido y lanza excepción
+        User owner = (User) userTable.get(uid); //En esta linea se usa el hash de usuarios del sistema y se busca si el usuario owner del proceso existe
+        if (owner == null) {
+            System.err.println("UID " + uid + " no encontrado, proceso " + pid + " omitido.");
+            throw new OwnerNotFoundException("No se ha encontrado el usuario dueño del proceso");
+        }
+
         try {
-            // split por ; con límite 4 para no partir el bloque de eventos
-            // "26362;98;python.exe;{RAM:[...]# CPU:[...]}"
-            String[] fields = line.split(";", 4);
-            if (fields.length < 4) return null; //Si la lista de procesos se encuentra incompleta, se retorna null
-            //Luego de realizados los cortes con el line.split, se toma cada campo como un atributo
-            //para la creación del proceso
-            int pid      = Integer.parseInt(fields[0].trim());
-            int uid      = Integer.parseInt(fields[1].trim());
-            String name  = fields[2].trim();
-            //Se crea un atributo bloque que contiene todos los eventos del proceso aún sin separar
-            String block = fields[3].trim(); // "{RAM:[...]# CPU:[...]}"
-
-            ///---En caso de que el usuario no exista, el proceso es omitido y lanza excepción
-            User owner = (User) userTable.get(uid); //En esta linea se usa el hash de usuarios del sistema y se busca si el usuario owner del proceso existe
-            if (owner == null) {
-                System.err.println("UID " + uid + " no encontrado, proceso " + pid + " omitido.");
-                throw new OwnerNotFoundException("No se ha encontrado el usuario dueño del proceso");
-            }
-
-
             //En caso de que todo salga bien se procede a la creación del proceso
-
             Process process = new Process(pid, name, owner, ProcessState.NEW); //Asigno al proceso el estado New
 
             // quitar corchetes: {RAM:[...]# CPU:[...]} → RAM:[...]# CPU:[...]
@@ -105,7 +103,7 @@ public class DataLoader {
                 token = token.trim();
                 // token = "RAM:[release, cache, cache]"
 
-                int bracketOpen  = token.indexOf(":[");
+                int bracketOpen = token.indexOf(":[");
                 if (bracketOpen == -1) continue;
                 //extraccion de tipo de evento, va desde el inicio hasta la posicion del bracketOpen y lo extrae limpio
                 String typeName = token.substring(0, bracketOpen).trim();
@@ -113,7 +111,7 @@ public class DataLoader {
                 String instrPart = token.substring(bracketOpen + 2, token.length() - 1);
                 // instrPart = "release, cache, cache" me quedo con los eventos
 
-                //Creo un objeto de tipo EventType y busco el valor que tiene typeNamede ese enum
+                //Creo un objeto de tipo EventType y busco el valor que tiene typeName de ese enum
                 EventType eType = EventType.valueOf(typeName);
                 Event event = new Event(eType); //creo el nuevo evento de tipo eType encontrado
 
@@ -122,7 +120,7 @@ public class DataLoader {
                 for (String instr : instrs) {
                     event.addInstruction(instr.trim());
                 }
-                //una vez cerado en evento con sus instrucciones se añade a la lista de eventos en proceso
+                //una vez creado el evento con sus instrucciones se añade a la lista de eventos en proceso
                 process.addEvent(event);
             }
 
@@ -130,7 +128,7 @@ public class DataLoader {
 
         } catch (Exception e) {
             System.err.println("Línea malformada, se omite: " + line);
-            return null;
+            return null; // ← solo atrapa errores de formato
         }
     }
 }

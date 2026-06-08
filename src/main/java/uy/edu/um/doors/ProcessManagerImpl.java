@@ -121,20 +121,24 @@ public class ProcessManagerImpl implements ProcessManager {
             return;
         }
 
-        // Extrae el de mayor prioridad
-        procesoEnEjecucion = procesosPendientes.remove();
-        procesoEnEjecucion.setState(ProcessState.RUNNING);
+        try {
+            // Extrae el de mayor prioridad
+            procesoEnEjecucion = procesosPendientes.remove();
+            procesoEnEjecucion.setState(ProcessState.RUNNING);
 
-        logger.escribir(String.format(
-                "EXECUTING PROCESS: PID=%d | USER:%s UID:%d",
-                procesoEnEjecucion.getPid(),
-                procesoEnEjecucion.getUser().getAlias(),
-                procesoEnEjecucion.getUser().getUid()
-        ));
+            // Registrar en log y mostrar en consola
+            String logLine = procesoEnEjecucion.toStringExecuting();
+            logger.escribir(logLine);
+            System.out.println(logLine);
 
-        //Agregar impresión de instrucciones por evento hecho por angel
+            // Imprimir eventos en consola
+            procesoEnEjecucion.printEvents();
+
+
+        } catch (EmptyHeapException e) {
+            System.err.println("Error al extraer proceso del heap: " + e.getMessage());
+        }
     }
-
     @Override
     public void finishProcessOk() {
 
