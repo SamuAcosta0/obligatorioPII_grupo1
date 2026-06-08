@@ -67,28 +67,28 @@ public class DataLoader {
         }
     }
 
-    private static Process parseLine(String line, MyHash userTable) throws OwnerNotFoundException {
-        // split por ; con límite 4 para no partir el bloque de eventos
-        // "26362;98;python.exe;{RAM:[...]# CPU:[...]}"
-        String[] fields = line.split(";", 4);
-        if (fields.length < 4) return null; //Si la lista de procesos se encuentra incompleta, se retorna null
-
-        //Luego de realizados los cortes con el line.split, se toma cada campo como un atributo
-        //para la creación del proceso
-        int pid = Integer.parseInt(fields[0].trim());
-        int uid = Integer.parseInt(fields[1].trim());
-        String name = fields[2].trim();
-        //Se crea un atributo bloque que contiene todos los eventos del proceso aún sin separar
-        String block = fields[3].trim(); // "{RAM:[...]# CPU:[...]}"
-
-        ///---En caso de que el usuario no exista, el proceso es omitido y lanza excepción
-        User owner = (User) userTable.get(uid); //En esta linea se usa el hash de usuarios del sistema y se busca si el usuario owner del proceso existe
-        if (owner == null) {
-            System.err.println("UID " + uid + " no encontrado, proceso " + pid + " omitido.");
-            throw new OwnerNotFoundException("No se ha encontrado el usuario dueño del proceso");
-        }
-
+    private static Process parseLine(String line, MyHash userTable) {
         try {
+            // split por ; con límite 4 para no partir el bloque de eventos
+            // "26362;98;python.exe;{RAM:[...]# CPU:[...]}"
+            String[] fields = line.split(";", 4);
+            if (fields.length < 4) return null; //Si la lista de procesos se encuentra incompleta, se retorna null
+
+            //Luego de realizados los cortes con el line.split, se toma cada campo como un atributo
+            //para la creación del proceso
+            int pid = Integer.parseInt(fields[0].trim());
+            int uid = Integer.parseInt(fields[1].trim());
+            String name = fields[2].trim();
+            //Se crea un atributo bloque que contiene todos los eventos del proceso aún sin separar
+            String block = fields[3].trim(); // "{RAM:[...]# CPU:[...]}"
+
+            ///---En caso de que el usuario no exista, el proceso es omitido y lanza excepción
+            User owner = (User) userTable.get(uid); //En esta linea se usa el hash de usuarios del sistema y se busca si el usuario owner del proceso existe
+            if (owner == null) {
+                System.err.println("UID " + uid + " no encontrado, proceso " + pid + " omitido.");
+                throw new OwnerNotFoundException("No se ha encontrado el usuario dueño del proceso");
+            }
+
             //En caso de que todo salga bien se procede a la creación del proceso
             Process process = new Process(pid, name, owner, ProcessState.NEW); //Asigno al proceso el estado New
 
@@ -126,6 +126,9 @@ public class DataLoader {
 
             return process;
 
+        } catch (OwnerNotFoundException e) {
+            // ← el owner no existe, se omite el proceso
+            return null;
         } catch (Exception e) {
             System.err.println("Línea malformada, se omite: " + line);
             return null; // ← solo atrapa errores de formato
