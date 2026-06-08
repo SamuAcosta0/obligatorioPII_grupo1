@@ -443,7 +443,7 @@ public class ProcessManagerImpl implements ProcessManager {
 
         // Mostrar "(ninguno)" solo si hay filtro activo y no hubo coincidencias
         if ((filterUid != null || filterPid != null) && !hayCoincidencias) {
-            System.out.println("  (ninguno)");
+            System.out.println("No hay procesos pendientes.");
         }
 
         // Restaurar el heap original
@@ -492,7 +492,7 @@ public class ProcessManagerImpl implements ProcessManager {
         }
 
         if ((filterUid != null || filterPid != null) && !hayCoincidencias) {
-            System.out.println("  (ninguno)");
+            System.out.println("No hay procesos finalizados.");
         }
 
         // Restaurar stack: reinsertar en orden inverso para mantener LIFO original
@@ -539,7 +539,7 @@ public class ProcessManagerImpl implements ProcessManager {
         }
 
         if ((filterUid != null || filterPid != null) && !hayCoincidencias) {
-            System.out.println("  (ninguno)");
+            System.out.println("No hay procesos pendientes.");
         }
 
         for (int i = 0; i < count; i++) {
@@ -585,7 +585,7 @@ public class ProcessManagerImpl implements ProcessManager {
         }
 
         if ((filterUid != null || filterPid != null) && !hayCoincidencias) {
-            System.out.println("  (ninguno)");
+            System.out.println("No hay procesos finalizados.");
         }
 
         for (int i = count - 1; i >= 0; i--) {
