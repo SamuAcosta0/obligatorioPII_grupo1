@@ -79,7 +79,11 @@ public class Process implements Comparable<Process> {
 
     @Override
     public int compareTo(Process other) {
-        return Integer.compare(this.priority, other.priority);
+        int cmp = Integer.compare(this.priority, other.priority);
+        if (cmp != 0) {
+            return cmp;            // DISTINTA PRIORIDAD
+        }
+        return Integer.compare(this.pid, other.pid);  //IGUAL PRIORIDAD, DESEMPATE POR PID
     }
 
 
