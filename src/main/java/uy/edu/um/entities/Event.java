@@ -2,6 +2,8 @@ package uy.edu.um.entities;
 
 import uy.edu.um.tad.list.MyList;
 import uy.edu.um.tad.list.MyLinkedListImpl;
+import uy.edu.um.tad.list.Node;
+
 
 public class Event {
 
@@ -30,11 +32,13 @@ public class Event {
         StringBuilder sb = new StringBuilder();
         sb.append("EVENT: ").append(type);
         sb.append(" | Instructions [");
-        for (int i = 0; i < instructions.size(); i++) {
-            sb.append(instructions.get(i));
-            if (i < instructions.size() - 1) {
+        Node<String> current = instructions.getFirst();
+        while (current != null) {
+            sb.append(current.getValue());
+            if (current.getNext() != null) {
                 sb.append(", ");
             }
+            current = current.getNext();
         }
         sb.append("]");
         return sb.toString();

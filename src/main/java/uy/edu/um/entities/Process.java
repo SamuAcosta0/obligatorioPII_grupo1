@@ -3,6 +3,7 @@ package uy.edu.um.entities;
 import lombok.Setter;
 import uy.edu.um.tad.list.MyList;
 import uy.edu.um.tad.list.MyLinkedListImpl;
+import uy.edu.um.tad.list.Node;
 
 public class Process implements Comparable<Process> {
 
@@ -10,15 +11,16 @@ public class Process implements Comparable<Process> {
     private String name;
     private User user;
     private int priority;
-
     @Setter
     private ProcessState state;
     @Setter
     private FinishType finishType;
     @Setter
     private User terminatedBy;
-
     private MyList<Event> events;
+
+
+
     //Se inicializa en 0 cada proceso antes de entrar a la queue de procesos, se calcula ahí
     public Process(int pid, String name, User user, ProcessState aNew) {
         this.pid        = pid;
@@ -35,15 +37,18 @@ public class Process implements Comparable<Process> {
         int nCPU  = 0;
         int nRAM  = 0;
         int nDISK = 0;
-        int nTotal = events.size();
+        int nTotal = 0;
 
-        for (int i = 0; i < nTotal; i++) {
-            Event e = events.get(i);
+        Node<Event> current = events.getFirst();
+        while (current != null) {
+            Event e = current.getValue();
             switch (e.getType()) {
                 case CPU:  nCPU++;  break;
                 case RAM:  nRAM++;  break;
                 case DISK: nDISK++; break;
             }
+            nTotal++;
+            current = current.getNext();
         }
 
         int W = (user.getType() == UserType.ADMIN) ? 32 : 16;
@@ -57,21 +62,25 @@ public class Process implements Comparable<Process> {
     }
 
     public void printEvents() {
-        for (int i = 0; i < events.size(); i++) {
-            System.out.println(events.get(i)); // delega a Event.toString()
+        Node<Event> current = events.getFirst();
+        while (current != null) {
+            System.out.println(current.getValue()); // delega a Event.toString()
+            current = current.getNext();
         }
     }
 
     public String getEventsAsLogString() {
         StringBuilder result = new StringBuilder();
 
-        for (int i = 0; i < events.size(); i++) {
-            result.append(events.get(i).toString()); // delega a Event.toString()
+        Node<Event> current = events.getFirst();
+        while (current != null) {
+            result.append(current.getValue().toString()); // delega a Event.toString()
 
             // Salto de línea entre eventos (no al final del último)
-            if (i < events.size() - 1) {
+            if (current.getNext() != null) {
                 result.append("\n");
             }
+            current = current.getNext();
         }
 
         return result.toString();
@@ -96,7 +105,9 @@ public class Process implements Comparable<Process> {
     public User getTerminatedBy()        { return terminatedBy; }
     public MyList<Event> getEvents()     { return events; }
 
-    public void addEvent(Event event)                 { this.events.add(event); }
+    public void addEvent(Event event)                 {
+        this.events.add(event);
+    }
 
     // Para PENDING y EXECUTING en pstatus
     @Override
