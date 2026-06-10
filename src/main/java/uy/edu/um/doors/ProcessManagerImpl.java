@@ -245,7 +245,7 @@ public class ProcessManagerImpl implements ProcessManager {
         recorrerPendientes(null, null, false, null);
 
         System.out.println("FINISHED:");
-        recorrerFinalizados(null, null, false);
+        recorrerFinalizados(null, null, false, null);
     }
 
     @Override
@@ -262,7 +262,7 @@ public class ProcessManagerImpl implements ProcessManager {
         recorrerPendientes(null, null, true ,null);
 
         System.out.println("FINISHED:");
-        recorrerFinalizados(null, null, true);
+        recorrerFinalizados(null, null, true, null);
     }
 
     @Override
@@ -287,12 +287,16 @@ public class ProcessManagerImpl implements ProcessManager {
             recorrerPendientes(uid, null, false, null);
 
             System.out.println("FINISHED:");
-            recorrerFinalizados(uid, null, false);
+            recorrerFinalizados(uid, null, false, null);
 
         } catch (UserProcessNotFoundException e) {
             System.out.println(e.getMessage());
         }
     }
+
+
+
+
     @Override
     public void printStatusByProcess(int pid) {
         boolean enEjecucion = (procesoEnEjecucion != null && procesoEnEjecucion.getPid() == pid);
@@ -304,7 +308,6 @@ public class ProcessManagerImpl implements ProcessManager {
             procesoEnEjecucion.printEvents();
             return;
         }
-
         // Recorre pendientes UNA vez; imprime header+proceso solo si lo encuentra
         if (recorrerPendientes(null, pid, true, "PROCESS STATUS - PID:" + pid + "\nPENDING:")) {
             return;
@@ -318,6 +321,11 @@ public class ProcessManagerImpl implements ProcessManager {
         // No apareció en ninguna sección
         System.out.println(new ProcessNotFoundException(pid).getMessage());
     }
+
+
+
+
+    //////////////////////////////////////////METODOS DE RECORRIDA//////////////////////////////////////////
     private boolean recorrerPendientes(Integer filterUid, Integer filterPid, boolean showEvents, String header) {
         int size = procesosPendientes.size();
         Process[] temp = new Process[size];
@@ -379,42 +387,6 @@ public class ProcessManagerImpl implements ProcessManager {
                 if (!hayCoincidencias && header != null) {
                     System.out.println(header);
                 }
-                System.out.println("  " + p.toStringFinished());
-                if (showEvents) {
-                    p.printEvents();
-                }
-                hayCoincidencias = true;
-            }
-        }
-
-        // Restaurar el stack en orden inverso para preservar el LIFO original
-        for (int i = count - 1; i >= 0; i--) {
-            procesosFinalizados.push(temp[i]);
-        }
-
-        return hayCoincidencias;
-    }
-    //////////////////////////////////METODOS DE RECORRIDA ////////////////////////////////////////////////////
-
-
-    private boolean recorrerFinalizados(Integer filterUid, Integer filterPid, boolean showEvents) {
-        int stackSize = procesosFinalizados.size();
-        Process[] temp = new Process[stackSize];
-        int count = 0;
-
-        while (!procesosFinalizados.isEmpty()) {
-            try {
-                temp[count++] = procesosFinalizados.pop();
-            } catch (EmptyStackException e) {
-                break;
-            }
-        }
-
-        boolean hayCoincidencias = false;
-        for (int i = 0; i < count; i++) {
-            Process p = temp[i];
-            if ((filterUid == null || p.getUser().getUid() == filterUid) &&
-                    (filterPid == null || p.getPid() == filterPid)) {
                 System.out.println("  " + p.toStringFinished());
                 if (showEvents) {
                     p.printEvents();
