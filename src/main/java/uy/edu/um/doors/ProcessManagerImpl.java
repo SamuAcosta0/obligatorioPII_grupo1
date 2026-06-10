@@ -142,6 +142,7 @@ public class ProcessManagerImpl implements ProcessManager {
             System.out.println("ERROR: " + e.getMessage());
         }
     }
+
     @Override
     public void finishProcessOk() {
         try {
@@ -242,10 +243,10 @@ public class ProcessManagerImpl implements ProcessManager {
         }
 
         System.out.println("PENDING:");
-        recorrerPendientes(null, null, false, null);
+        recorrerPendientes(null, null, false, null, false);
 
         System.out.println("FINISHED:");
-        recorrerFinalizados(null, null, false, null);
+        recorrerFinalizados(null, null, false, null, false);
     }
 
     @Override
@@ -259,10 +260,10 @@ public class ProcessManagerImpl implements ProcessManager {
         }
 
         System.out.println("PENDING:");
-        recorrerPendientes(null, null, true ,null);
+        recorrerPendientes(null, null, true, null, false);
 
         System.out.println("FINISHED:");
-        recorrerFinalizados(null, null, true, null);
+        recorrerFinalizados(null, null, true, null, false);
     }
 
     @Override
@@ -271,7 +272,9 @@ public class ProcessManagerImpl implements ProcessManager {
             boolean enEjecucion = (procesoEnEjecucion != null && procesoEnEjecucion.getUser().getUid() == uid);
 
             // Verificar existencia ANTES de imprimir cualquier header
-            if (!enEjecucion && !existeEnPendientes(uid, null) && !existeEnFinalizados(uid, null)) {
+            if (!enEjecucion
+                    && !recorrerPendientes(uid, null, false, null, true)
+                    && !recorrerFinalizados(uid, null, false, null, true)) {
                 throw new UserProcessNotFoundException(uid);
             }
 
@@ -284,17 +287,15 @@ public class ProcessManagerImpl implements ProcessManager {
             }
 
             System.out.println("PENDING:");
-            recorrerPendientes(uid, null, false, null);
+            recorrerPendientes(uid, null, false, null, false);
 
             System.out.println("FINISHED:");
-            recorrerFinalizados(uid, null, false, null);
+            recorrerFinalizados(uid, null, false, null, false);
 
         } catch (UserProcessNotFoundException e) {
             System.out.println(e.getMessage());
         }
     }
-
-
 
 
     @Override
@@ -309,12 +310,12 @@ public class ProcessManagerImpl implements ProcessManager {
             return;
         }
         // Recorre pendientes UNA vez; imprime header+proceso solo si lo encuentra
-        if (recorrerPendientes(null, pid, true, "PROCESS STATUS - PID:" + pid + "\nPENDING:")) {
+        if (recorrerPendientes(null, pid, true, "PROCESS STATUS - PID:" + pid + "\nPENDING:", false)) {
             return;
         }
 
         // Si no estaba en pendientes, recorre finalizados UNA vez
-        if (recorrerFinalizados(null, pid, true, "PROCESS STATUS - PID:" + pid + "\nFINISHED:")) {
+        if (recorrerFinalizados(null, pid, true, "PROCESS STATUS - PID:" + pid + "\nFINISHED:", false)) {
             return;
         }
 
@@ -322,15 +323,12 @@ public class ProcessManagerImpl implements ProcessManager {
         System.out.println(new ProcessNotFoundException(pid).getMessage());
     }
 
+    /// ///////////////////////////////// HELPERS DE VACIADO Y RESTAURACIÓN ////////////////////////////////////
 
-
-
-    //////////////////////////////////////////METODOS DE RECORRIDA//////////////////////////////////////////
-    private boolean recorrerPendientes(Integer filterUid, Integer filterPid, boolean showEvents, String header) {
-        int size = procesosPendientes.size();
-        Process[] temp = new Process[size];
+// Vacía el heap de pendientes a un array (los procesos salen ordenados por prioridad).
+    private Process[] vaciarPendientes() {
+        Process[] temp = new Process[procesosPendientes.size()];
         int count = 0;
-
         while (!procesosPendientes.isEmpty()) {
             try {
                 temp[count++] = procesosPendientes.remove();
@@ -338,38 +336,20 @@ public class ProcessManagerImpl implements ProcessManager {
                 break;
             }
         }
+        return temp;
+    }
 
-        boolean hayCoincidencias = false;
-        for (int i = 0; i < count; i++) {
-            Process p = temp[i];
-            if ((filterUid == null || p.getUser().getUid() == filterUid) &&
-                    (filterPid == null || p.getPid() == filterPid)) {
-                // Imprime el header solo la primera vez que encuentra coincidencia
-                if (!hayCoincidencias && header != null) {
-                    System.out.println(header);
-                }
-                System.out.println("  " + p.toString());
-                if (showEvents) {
-                    p.printEvents();
-                }
-                hayCoincidencias = true;
-            }
-        }
-
-        for (int i = 0; i < count; i++) {
+    // Reinserta los procesos en el heap (el orden de reinserción no afecta la estructura final).
+    private void restaurarPendientes(Process[] temp) {
+        for (int i = 0; i < temp.length; i++) {
             procesosPendientes.insert(temp[i]);
         }
-
-        return hayCoincidencias;
     }
-    // Recorre el stack de finalizados aplicando filtros opcionales (null = sin filtro),
-// imprime cada coincidencia indentada y restaura el stack. Retorna true si hubo coincidencias.
-// Si header != null, lo imprime una sola vez antes de la primera coincidencia.
-    private boolean recorrerFinalizados(Integer filterUid, Integer filterPid, boolean showEvents, String header) {
-        int stackSize = procesosFinalizados.size();
-        Process[] temp = new Process[stackSize];
-        int count = 0;
 
+    // Vacía el stack de finalizados a un array (índice 0 = tope del stack).
+    private Process[] vaciarFinalizados() {
+        Process[] temp = new Process[procesosFinalizados.size()];
+        int count = 0;
         while (!procesosFinalizados.isEmpty()) {
             try {
                 temp[count++] = procesosFinalizados.pop();
@@ -377,82 +357,73 @@ public class ProcessManagerImpl implements ProcessManager {
                 break;
             }
         }
+        return temp;
+    }
+
+    // Restaura el stack en orden inverso para preservar el LIFO original.
+    private void restaurarFinalizados(Process[] temp) {
+        for (int i = temp.length - 1; i >= 0; i--) {
+            procesosFinalizados.push(temp[i]);
+        }
+    }
+
+    /// ///////////////////////////////// METODOS DE RECORRIDA //////////////////////////////////////////
+
+// Recorre el heap de pendientes aplicando filtros opcionales (null = sin filtro).
+// Si soloVerificar es true, no imprime nada y solo retorna si hubo coincidencias.
+// Si header != null, lo imprime una sola vez antes de la primera coincidencia.
+    private boolean recorrerPendientes(Integer filterUid, Integer filterPid, boolean showEvents, String header, boolean soloVerificar) {
+        Process[] temp = vaciarPendientes();
 
         boolean hayCoincidencias = false;
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < temp.length; i++) {
             Process p = temp[i];
             if ((filterUid == null || p.getUser().getUid() == filterUid) &&
                     (filterPid == null || p.getPid() == filterPid)) {
-                // Imprime el header solo la primera vez que encuentra coincidencia
-                if (!hayCoincidencias && header != null) {
-                    System.out.println(header);
-                }
-                System.out.println("  " + p.toStringFinished());
-                if (showEvents) {
-                    p.printEvents();
+                if (!soloVerificar) {
+                    // Imprime el header solo la primera vez que encuentra coincidencia
+                    if (!hayCoincidencias && header != null) {
+                        System.out.println(header);
+                    }
+                    System.out.println("  " + p.toString());
+                    if (showEvents) {
+                        p.printEvents();
+                    }
                 }
                 hayCoincidencias = true;
             }
         }
 
-        // Restaurar el stack en orden inverso para preservar el LIFO original
-        for (int i = count - 1; i >= 0; i--) {
-            procesosFinalizados.push(temp[i]);
-        }
-
+        restaurarPendientes(temp);
         return hayCoincidencias;
     }
 
-    // Verifica si existe algún proceso que cumpla el filtro en el heap de pendientes (vacía y restaura).
-    private boolean existeEnPendientes(Integer filterUid, Integer filterPid) {
-        int size = procesosPendientes.size();
-        Process[] temp = new Process[size];
-        int count = 0;
-        boolean encontrado = false;
+    // Recorre el stack de finalizados aplicando filtros opcionales (null = sin filtro).
+// Si soloVerificar es true, no imprime nada y solo retorna si hubo coincidencias.
+// Si header != null, lo imprime una sola vez antes de la primera coincidencia.
+    private boolean recorrerFinalizados(Integer filterUid, Integer filterPid, boolean showEvents, String header, boolean soloVerificar) {
+        Process[] temp = vaciarFinalizados();
 
-        while (!procesosPendientes.isEmpty()) {
-            try {
-                temp[count++] = procesosPendientes.remove();
-            } catch (EmptyHeapException e) {
-                break;
+        boolean hayCoincidencias = false;
+        for (int i = 0; i < temp.length; i++) {
+            Process p = temp[i];
+            if ((filterUid == null || p.getUser().getUid() == filterUid) &&
+                    (filterPid == null || p.getPid() == filterPid)) {
+                if (!soloVerificar) {
+                    // Imprime el header solo la primera vez que encuentra coincidencia
+                    if (!hayCoincidencias && header != null) {
+                        System.out.println(header);
+                    }
+                    System.out.println("  " + p.toStringFinished());
+                    if (showEvents) {
+                        p.printEvents();
+                    }
+                }
+                hayCoincidencias = true;
             }
         }
 
-        for (int i = 0; i < count; i++) {
-            if ((filterUid == null || temp[i].getUser().getUid() == filterUid) &&
-                    (filterPid == null || temp[i].getPid() == filterPid)) {
-                encontrado = true;
-            }
-            procesosPendientes.insert(temp[i]); // Restaurar
-        }
-
-        return encontrado;
+        restaurarFinalizados(temp);
+        return hayCoincidencias;
     }
-
-    // Verifica si existe algún proceso que cumpla el filtro en el stack de finalizados (vacía y restaura).
-    private boolean existeEnFinalizados(Integer filterUid, Integer filterPid) {
-        int size = procesosFinalizados.size();
-        Process[] temp = new Process[size];
-        int count = 0;
-        boolean encontrado = false;
-
-        while (!procesosFinalizados.isEmpty()) {
-            try {
-                temp[count++] = procesosFinalizados.pop();
-            } catch (EmptyStackException e) {
-                break;
-            }
-        }
-
-        for (int i = count - 1; i >= 0; i--) {
-            if ((filterUid == null || temp[i].getUser().getUid() == filterUid) &&
-                    (filterPid == null || temp[i].getPid() == filterPid)) {
-                encontrado = true;
-            }
-            procesosFinalizados.push(temp[i]); // Restaurar (LIFO)
-        }
-
-        return encontrado;
-    }
-
 }
