@@ -111,7 +111,6 @@ public class ProcessManagerImpl implements ProcessManager {
         //estan en el heap, la raiz tiene mayor prioridad
         //sacamos de los procesos pendientes el que tiene mayor prioridad
 
-        //NO pueden haber print y return: usar excepcion
         try {
             if (procesosPendientes.isEmpty())
                 throw new NoProcessesException("No hay procesos pendientes para ejecutar.");
@@ -323,9 +322,9 @@ public class ProcessManagerImpl implements ProcessManager {
         System.out.println(new ProcessNotFoundException(pid).getMessage());
     }
 
-    /// ///////////////////////////////// HELPERS DE VACIADO Y RESTAURACIÓN ////////////////////////////////////
+    /// ///////////////////////////////// VACIADO Y RESTAURACIÓN ////////////////////////////////////
 
-// Vacía el heap de pendientes a un array (los procesos salen ordenados por prioridad).
+    // Vacía el heap de pendientes a un array (los procesos salen ordenados por prioridad).
     private Process[] vaciarPendientes() {
         Process[] temp = new Process[procesosPendientes.size()];
         int count = 0;
@@ -369,9 +368,9 @@ public class ProcessManagerImpl implements ProcessManager {
 
     /// ///////////////////////////////// METODOS DE RECORRIDA //////////////////////////////////////////
 
-// Recorre el heap de pendientes aplicando filtros opcionales (null = sin filtro).
-// Si soloVerificar es true, no imprime nada y solo retorna si hubo coincidencias.
-// Si header != null, lo imprime una sola vez antes de la primera coincidencia.
+    // Recorre el heap de pendientes aplicando filtros opcionales (null = sin filtro).
+    // Si soloVerificar es true, no imprime nada y solo retorna si hubo coincidencias.
+    // Si header != null, lo imprime una sola vez antes de la primera coincidencia.
     private boolean recorrerPendientes(Integer filterUid, Integer filterPid, boolean showEvents, String header, boolean soloVerificar) {
         Process[] temp = vaciarPendientes();
 
@@ -399,8 +398,8 @@ public class ProcessManagerImpl implements ProcessManager {
     }
 
     // Recorre el stack de finalizados aplicando filtros opcionales (null = sin filtro).
-// Si soloVerificar es true, no imprime nada y solo retorna si hubo coincidencias.
-// Si header != null, lo imprime una sola vez antes de la primera coincidencia.
+    // Si soloVerificar es true, no imprime nada y solo retorna si hubo coincidencias.
+    // Si header != null, lo imprime una sola vez antes de la primera coincidencia.
     private boolean recorrerFinalizados(Integer filterUid, Integer filterPid, boolean showEvents, String header, boolean soloVerificar) {
         Process[] temp = vaciarFinalizados();
 

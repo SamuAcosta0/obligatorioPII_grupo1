@@ -116,7 +116,7 @@ public class DataLoader {
                 Event event = new Event(eType); //creo el nuevo evento de tipo eType encontrado
 
                 String[] instrs = instrPart.split(","); // creo un array con las instrucciones separadas
-                //recorro cada instruccion y las voy añadiendo al evento de un tipo en específico
+                //recorro cada instrucción y las voy añadiendo al evento de un tipo en específico
                 for (String instr : instrs) {
                     event.addInstruction(instr.trim());
                 }
@@ -127,11 +127,11 @@ public class DataLoader {
             return process;
 
         } catch (OwnerNotFoundException e) {
-            // ← el owner no existe, se omite el proceso
+            // el owner no existe, se omite el proceso
             return null;
         } catch (Exception e) {
             System.err.println("Línea malformada, se omite: " + line);
-            return null; // ← solo atrapa errores de formato
+            return null; // solo atrapa errores de formato
         }
     }
 }
