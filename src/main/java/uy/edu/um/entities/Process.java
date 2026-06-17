@@ -19,7 +19,14 @@ public class Process implements Comparable<Process> {
     private User terminatedBy;
     private MyList<Event> events;
 
-
+    public int getPid()                  { return pid; }
+    public String getName()              { return name; }
+    public User getUser()                { return user; }
+    public int getPriority()             { return priority; }
+    public ProcessState getState()       { return state; }
+    public FinishType getFinishType()    { return finishType; }
+    public User getTerminatedBy()        { return terminatedBy; }
+    public MyList<Event> getEvents()     { return events; }
 
     //Se inicializa en 0 cada proceso antes de entrar a la queue de procesos, se calcula ahí
     public Process(int pid, String name, User user, ProcessState aNew) {
@@ -64,7 +71,7 @@ public class Process implements Comparable<Process> {
     public void printEvents() {
         Node<Event> current = events.getFirst();
         while (current != null) {
-            System.out.println(current.getValue()); // delega a Event.toString()
+            System.out.println(current.getValue());
             current = current.getNext();
         }
     }
@@ -94,16 +101,6 @@ public class Process implements Comparable<Process> {
         }
         return Integer.compare(this.pid, other.pid);  //IGUAL PRIORIDAD, DESEMPATE POR PID
     }
-
-
-    public int getPid()                  { return pid; }
-    public String getName()              { return name; }
-    public User getUser()                { return user; }
-    public int getPriority()             { return priority; }
-    public ProcessState getState()       { return state; }
-    public FinishType getFinishType()    { return finishType; }
-    public User getTerminatedBy()        { return terminatedBy; }
-    public MyList<Event> getEvents()     { return events; }
 
     public void addEvent(Event event)                 {
         this.events.add(event);
